@@ -19,6 +19,7 @@
   library(rcartocolor)
   library(gridExtra)
   library(cluster)
+  library(Hmisc)
   
   # 1.2 Pre - Graph Theme ----
   
@@ -33,55 +34,131 @@
   # lapop_2014 # Unweighted 
   # lapop_2016 # Weighted 
   # lapop_2018 # Weighted
+
+
   
-  lapop_2006 <- read.dta("http://datasets.americasbarometer.org/database/files/2138048899brazil_lapop_dims%20final%202007%20v5.dta") 
+  lapop_2006 <- read.dta("http://datasets.americasbarometer.org/database/files/2138048899brazil_lapop_dims%20final%202007%20v5.dta")%>% #----
+    rename_all(tolower)%>%
+    mutate(gen.06 = recode(as.numeric(gen3), `1` = 5, `2` = 4, `3` = 2, `4` = 1, `5` = 3),
+           econ.06 = recode(as.numeric(pr6),`1` = 1, `2` = 2, `3` = 4, `4` = 5, `5` = 3),
+           lgbt.pol = impute(as.numeric(d5), mean),
+           gen.06 = impute(as.numeric(gen.06), mean),
+           econ.06 = impute(as.numeric(econ.06), mean),
+           democ = impute(as.numeric(ing4), mean),
+           golpe.crim = impute(as.numeric(jc10), mean),
+           golpe.corrup = impute(as.numeric(jc13), mean),
+           golpe.congr = impute(as.numeric(jc15), mean),
+           year = 2006) 
+    
+  lapop_2008 <- read.dta("http://datasets.americasbarometer.org/database/files/30541815brazil_lapop_dims_2008_final_data_set_v10.dta")%>% #----
+    mutate(gen = recode(as.numeric(vb50), `1` = 4, `2` = 3, `3` = 2, `4` = 1),
+           lgbt.pol = impute(as.numeric(d5), mean),
+           gen = impute(as.numeric(gen), mean),
+           econ = impute(as.numeric(ros4), mean),
+           democ = impute(as.numeric(ing4), mean),
+           golpe.crim = impute(as.numeric(jc10)),
+           golpe.corrup = impute(as.numeric(jc13), mean),
+           golpe.congr = impute(as.numeric(jc15), mean),
+           year = 2008) 
   
-  lapop_2008 <- read.dta("http://datasets.americasbarometer.org/database/files/30541815brazil_lapop_dims_2008_final_data_set_v10.dta")%>%
-                mutate(d5 = recode(d5, "Aprova totalmente" = "10", "Desaprova totalmente" = "1"),                   
-                       ros4 = recode(ros4, "Concorda muito" = "7", "Discorda muito" = "1"))
+  lapop_2010 <- read.dta("http://datasets.americasbarometer.org/database/files/7948266051039660950Brazil_LAPOP_AmericasBarometer%202010%20data%20set%20%20approved%20v4.dta")%>% #----
+    mutate(wt.nm = wt/sum(wt),
+           lgbt.pol = impute(as.numeric(d5), mean),
+           lgbt.casar = impute(as.numeric(d6), mean),
+           gen = NA,
+           econ = impute(as.numeric(ros4), mean),
+           democ = impute(as.numeric(ing4), mean),
+           golpe.crim = impute(as.numeric(jc10)),
+           golpe.corrup = impute(as.numeric(jc13), mean),
+           golpe.congr = impute(as.numeric(jc15a), mean),
+           year = 2010)      
   
-  lapop_2010 <- read.dta("http://datasets.americasbarometer.org/database/files/7948266051039660950Brazil_LAPOP_AmericasBarometer%202010%20data%20set%20%20approved%20v4.dta")%>%
-                mutate(d5 = as.numeric(recode(d5, "Apoia Fortemente" = "10", "Desaprova Fortemente" = "1")),
-                       ros4 = as.numeric(recode(ros4, "Concorda Muito" = "7", "Discorda Muito" = "1")),
-                       wt.nm = wt/sum(wt))     
+  lapop_2012 <- read.dta("http://datasets.americasbarometer.org/database/files/54861031Brazil%20LAPOP%20AmericasBarometer%202012%20Rev1_W.dta")%>% #----
+    mutate(lgbt.pol = impute(as.numeric(d5), mean),
+           lgbt.casar = impute(as.numeric(d6), mean),
+           gen = recode(as.numeric(vb50), `1` = 4, `2` = 3, `3` = 2, `4` = 1),
+           gen = impute(as.numeric(gen), mean),
+           econ = impute(as.numeric(ros4), mean),
+           democ = impute(as.numeric(ing4), mean),
+           golpe.crim = impute(as.numeric(jc10)),
+           golpe.corrup = impute(as.numeric(jc13), mean),
+           golpe.congr = impute(as.numeric(jc15a), mean),
+           year = 2012) 
   
-  lapop_2012 <- read.dta("http://datasets.americasbarometer.org/database/files/54861031Brazil%20LAPOP%20AmericasBarometer%202012%20Rev1_W.dta")
-  lapop_2014 <- read_dta("http://datasets.americasbarometer.org/database/files/636339374Brazil%20LAPOP%20AmericasBarometer%202014%20v3.0_W.dta")
-  lapop_2016 <- read.dta("http://datasets.americasbarometer.org/database/files/780314464Brazil%20LAPOP%20AmericasBarometer%202017%20V1.0_W.dta")%>%
-                mutate(wt.nm = wt/sum(wt))
-  lapop_2018 <- read_dta("http://datasets.americasbarometer.org/database/files/Brazil%20LAPOP%20AmericasBarometer%202019%20v1.0_W.dta")%>%
-    mutate(wt.nm = wt/sum(wt))
+
+  lapop_2014 <- read_dta("http://datasets.americasbarometer.org/database/files/636339374Brazil%20LAPOP%20AmericasBarometer%202014%20v3.0_W.dta")%>% #----
+    mutate(lgbt.pol = impute(as.numeric(d5), mean),
+           lgbt.casar = impute(as.numeric(d6), mean),
+           gen = recode(as.numeric(vb50), `1` = 4, `2` = 3, `3` = 2, `4` = 1),
+           gen = impute(as.numeric(gen), mean),
+           econ = impute(as.numeric(ros4), mean),
+           democ = impute(as.numeric(ing4), mean),
+           golpe.crim = impute(as.numeric(jc10)),
+           golpe.corrup = impute(as.numeric(jc13), mean),
+           golpe.congr = impute(as.numeric(jc15a), mean),
+           year = 2014) 
+  
+  lapop_2016 <- read.dta("http://datasets.americasbarometer.org/database/files/780314464Brazil%20LAPOP%20AmericasBarometer%202017%20V1.0_W.dta")%>% #----
+    mutate(wt.nm = wt/sum(wt),
+           lgbt.pol = impute(as.numeric(d5), mean),
+           lgbt.casar = impute(as.numeric(d6), mean),
+           gen = recode(as.numeric(vb50), `1` = 4, `2` = 3, `3` = 2, `4` = 1),
+           gen = impute(as.numeric(gen), mean),
+           econ = impute(as.numeric(ros4), mean),
+           democ = impute(as.numeric(ing4), mean),
+           golpe.crim = impute(as.numeric(jc10)),
+           golpe.corrup = impute(as.numeric(jc13), mean),
+           golpe.congr = impute(as.numeric(jc15a), mean),
+           year = 2016) 
+
+  lapop_2018 <- read_dta("http://datasets.americasbarometer.org/database/files/Brazil%20LAPOP%20AmericasBarometer%202019%20v1.0_W.dta")%>% #----
+    mutate(wt.nm = wt/sum(wt),
+           lgbt.pol = impute(as.numeric(d5), mean),
+           lgbt.casar = impute(as.numeric(d6), mean),
+           gen = recode(as.numeric(vb50), `1` = 4, `2` = 3, `3` = 2, `4` = 1),
+           gen = impute(as.numeric(gen), mean),
+           econ = impute(as.numeric(ros4), mean),
+           democ = impute(as.numeric(ing4), mean),
+           golpe.crim = impute(as.numeric(jc10)),
+           golpe.corrup = impute(as.numeric(jc13), mean),
+           golpe.congr = impute(as.numeric(jc15a), mean),
+           year = 2018) 
+  
+
   
   
-  lapop_2021 <- read_dta("http://datasets.americasbarometer.org/database/files/BRA_2021_LAPOP_AmericasBarometer_v1.2_w.dta")   
+  lapop_2021 <- read_dta("http://datasets.americasbarometer.org/database/files/BRA_2021_LAPOP_AmericasBarometer_v1.2_w.dta") #----   
+  
+  
   
   # 3. Kernel Density Plots ----
   
       # D5. E agora, mudando de assunto e pensando nos homossexuais, quanto o(a) sr./sra. aprova ou desaprova que estas pessoas possam candidatar-se para cargos públicos?
       # Escala de 10 pontos
-      
-      par(mfrow=c(2,4))
-      
-      d.lgbt.06 <- density(as.numeric(lapop_2006$D5), na.rm=T)%>%
+
+          
+     par(mfrow=c(2,4))
+     
+      d.lgbt.06 <- density(as.numeric(lapop_2006$lgbt.pol), na.rm=T)%>%
       plot(main = "LGBTs em Cargos Públicos - 2006", ylim = c(0,.25))
       
-      d.lgbt.08 <- density(as.numeric(lapop_2008$d5), na.rm=T)%>%
+      d.lgbt.08 <- density(as.numeric(lapop_2008$lgbt.pol), na.rm=T)%>%
       plot(main = "LGBTs em Cargos Públicos - 2008", ylim = c(0,.25))
       
-      d.lgbt.10 <- density(as.numeric(lapop_2010$d5), na.rm=T, weights = lapop_2010$wt.nm)%>% 
+      d.lgbt.10 <- density(as.numeric(lapop_2010$lgbt.pol), na.rm=T, weights = lapop_2010$wt.nm)%>% 
       plot(main = "LGBTs em Cargos Públicos - 2010", ylim = c(0,.25))
       
-      d.lgbt.12 <- density(as.numeric(lapop_2012$d5), na.rm=T)%>% 
+      d.lgbt.12 <- density(as.numeric(lapop_2012$lgbt.pol), na.rm=T)%>% 
       plot(main = "LGBTs em Cargos Públicos - 2012", ylim = c(0,.25))
       
-      d.lgbt.14 <- density(as.numeric(lapop_2014$d5), na.rm=T)%>% 
+      d.lgbt.14 <- density(as.numeric(lapop_2014$lgbt.pol), na.rm=T)%>% 
       plot(main = "LGBTs em Cargos Públicos - 2014", ylim = c(0,.25))
       
-      d.lgbt.16_17 <- density(as.numeric(lapop_2016$d5), na.rm=T, weights = lapop_2016$wt.nm)%>% 
+      d.lgbt.16_17 <- density(as.numeric(lapop_2016$lgbt.pol), na.rm=T, weights = lapop_2016$wt.nm)%>% 
       plot(main = "LGBTs em Cargos Públicos - 2016_17", ylim = c(0,.25))
       
-      d.lgbt.18_19 <- density(as.numeric(lapop_2018$d5), na.rm=T, weights = lapop_2018$wt.nm)%>% 
-      plot(main = "LGBTs em Cargos Públicos - 2018_19", ylim = c(0,.25))
+      d.lgbt.18_19 <- density(as.numeric(lapop_2018$lgbt.pol), na.rm=T, weights = lapop_2018$wt.nm)%>% 
+      plot(main = "LGBTs em Cargos Públicos - 2018_19", ylim = c(0,.25))            
       
       # ROS4. O Estado brasileiro deve implementar políticas públicas para reduzir a desigualdade de  renda entre ricos e pobres. Até que ponto concorda ou discorda desta frase?
       # Escala de 7 pontos
@@ -209,205 +286,135 @@
       
     
     
+  
+      
+  
+    
+      
   # 5. Cluster-Polarization Coefficient - METHOD ADOPTED BY MEHLAHAFF, 2020 ----
-    # 5.1 Using Elbow graph method to determine optimal number of clusters ("3" is the optimal number for all waves) ----
+  
+    # 5.2  Using Elbow graph method to determine optimal number of clusters ("3" is the optimal number for all waves) ----
     
           
-        
-        
         # insert data.frame to test: 
-          df.to.test <- lapop_2008$d5
-          df.to.test <- lapop_2010$d5
-          df.to.test <- lapop_2012$d5
-          df.to.test <- lapop_2014$d5
-          df.to.test <- lapop_2016$d5
-          df.to.test <- lapop_2018$d5
+          df.to.test <- lapop_2006%>%select(l1, lgbt.pol, gen.06,econ.06, golpe.crim, golpe.corrup, golpe.congr) # k = 10
+          df.to.test <- lapop_2008%>%select(l1, lgbt.pol, gen, econ, golpe.crim, golpe.corrup, golpe.congr) # k = 9
+          df.to.test <- lapop_2010%>%select(l1,lgbt.pol, econ, golpe.crim, golpe.corrup, golpe.congr) # k = 10
+          df.to.test <- lapop_2012%>%select(l1,lgbt.pol, gen, econ, golpe.crim, golpe.corrup, golpe.congr) # k = 10
+          df.to.test <- lapop_2014%>%select(l1,lgbt.pol, gen, econ, golpe.crim, golpe.corrup, golpe.congr) # k = 7
+          df.to.test <- lapop_2016%>%select(l1,lgbt.pol, gen, econ, golpe.crim, golpe.corrup, golpe.congr) # k = 10
+          df.to.test <- lapop_2018%>%select(l1,lgbt.pol, gen, econ, golpe.crim, golpe.corrup, golpe.congr) # k = 11
           
-          df.to.test <- lapop_2008$ros4
-          df.to.test <- lapop_2010$ros4
-          df.to.test <- lapop_2012$ros4
-          df.to.test <- lapop_2014$ros4
-          df.to.test <- lapop_2016$ros4
-          df.to.test <- lapop_2018$ros4
-   
-        
-          
-          
-          fviz_nbclust(lapop_2008, 
+      set.seed(123) 
+      fviz_nbclust(scale(na.omit(df.to.test[,-1])), 
                        kmeans, 
-                       k.max = 7,
-                       method = "wss") # Optimal number of clusters = 3 
-     
-      
-        # 5.2 Calculating CPC Coefficient in LAPOP Data for LGBT. PAUTA MORAL - D5. E agora, mudando de assunto e pensando nos homossexuais, quanto o(a) sr./sra. aprova ou desaprova que estas pessoas possam candidatar-se para cargos públicos? Escala de 10 pontos -----
-  
-          CPC_LGBT <- c("2006" = CPC(data = as.numeric(lapop_2006$D5), k = 2, adjust = T, type = "kmeans"),
-            "2008" = CPC(data = as.numeric(lapop_2008$d5), k = 2, adjust = T, type = "kmeans"),
-            "2010" = CPC(data = as.numeric(lapop_2010$d5), k = 2, adjust = T, type = "kmeans"),
-            "2012" = CPC(data = as.numeric(lapop_2012$d5), k = 2, adjust = T, type = "kmeans"),
-            "2014" = CPC(data = as.numeric(lapop_2014$d5), k = 2, adjust = T, type = "kmeans"),
-            "2016" = CPC(data = as.numeric(lapop_2016$d5), k = 2, adjust = T, type = "kmeans"),
-            "2018" = CPC(data = as.numeric(lapop_2018$d5), k = 3, adjust = T, type = "kmeans"))
-            
-          df.cpc_lgbt <- data.frame(year = as.numeric(names(CPC_LGBT)), lgbt = (CPC_LGBT))%>%
-            gather(variable, value, -year)
-  
-        # 5.3 Calculating CPC Coefficient in LAPOP Data for Socioeconomic Questions ----
-          CPC_socioe <- c("2006" = NA,
-                        "2008" = CPC(data = as.numeric(lapop_2008$ros4), k = 2, adjust = T, type = "kmeans"),
-                        "2010" = CPC(data = as.numeric(lapop_2010$ros4), k = 2, adjust = T, type = "kmeans"),
-                        "2012" = CPC(data = as.numeric(lapop_2012$ros4), k = 2, adjust = T, type = "kmeans"),
-                        "2014" = CPC(data = as.numeric(lapop_2014$ros4), k = 2, adjust = T, type = "kmeans"),
-                        "2016" = CPC(data = as.numeric(lapop_2016$ros4), k = 2, adjust = T, type = "kmeans"),
-                        "2018" = CPC(data = as.numeric(lapop_2018$ros4), k = 2, adjust = T, type = "kmeans"))
-          
-          df.cpc_socioe <- data.frame(year = as.numeric(names(CPC_socioe)), socio = (CPC_socioe))%>%
-            gather(variable, value, -year)
-          
-         
+                       k.max = 25,
+                       method = "wss", 
+                       print.summary = T) 
 
-          gg.cpc <- rbind(df.cpc_lgbt, df.cpc_socioe)%>%
+       
+       describe(scale(df.to.test))
+       
+       set.seed(123)
+       clustered.df <- kmeans(scale(df.to.test[,-1]), 4, nstart = 25)
+       # K-means clusters showing the group of each individuals
+       
+       
+    df.to.test.clustered <-  df.to.test%>%
+         mutate(cluster = clustered.df$cluster,
+                ideol = impute(as.numeric(l1),mean))%>%
+          select(-l1)
+    
+    summary <- df.to.test.clustered%>%
+         group_by(cluster)%>%
+         summarize_all(mean, na.rm = T)%>%
+         mutate(omnibus = lgbt.pol*econ*golpe.crim*golpe.corrup*golpe.congr)%>%
+         arrange(-omnibus)
+
+       
+    summary   
+    
+    table(df.to.test.clustered$cluster)
+    
+       
+       
+       fviz_cluster(clustered.df, data = df.to.test[,-1],
+                    geom = "point",
+                    ellipse.type = "convex", 
+                    ggtheme = theme_bw()
+       )
+       
+    
+       
+      df.to.test <- lapop_2006%>%select(l1, lgbt.pol, gen.06,econ.06, golpe.crim, golpe.corrup, golpe.congr)
+      set.seed(123)
+      CPC(data = scale(df.to.test[,-1]), k = 10, adjust = TRUE, type = "kmeans")
+      df.to.test <- lapop_2008%>%select(l1, lgbt.pol, gen, econ, golpe.crim, golpe.corrup, golpe.congr)
+      set.seed(123)
+      CPC(data = scale(df.to.test[,-1]), k = 9, adjust = TRUE, type = "kmeans")
+      df.to.test <- lapop_2010%>%select(l1,lgbt.pol, econ, golpe.crim, golpe.corrup, golpe.congr)
+      set.seed(123)
+      CPC(data = scale(df.to.test[,-1]), k = 10, adjust = TRUE, type = "kmeans")
+      df.to.test <- lapop_2012%>%select(l1,lgbt.pol, gen, econ, golpe.crim, golpe.corrup, golpe.congr)
+      set.seed(123)
+      CPC(data = scale(df.to.test[,-1]), k = 10, adjust = TRUE, type = "kmeans")
+      df.to.test <- lapop_2014%>%select(l1,lgbt.pol, gen, econ, golpe.crim, golpe.corrup, golpe.congr)
+      set.seed(123)
+      CPC(data = scale(df.to.test[,-1]), k = 7, adjust = TRUE, type = "kmeans")
+      df.to.test <- lapop_2016%>%select(l1,lgbt.pol, gen, econ, golpe.crim, golpe.corrup, golpe.congr)
+      set.seed(123)
+      CPC(data = scale(df.to.test[,-1]), k = 10, adjust = TRUE, type = "kmeans")
+      df.to.test <- lapop_2018%>%select(l1,lgbt.pol, gen, econ, golpe.crim, golpe.corrup, golpe.congr)
+      set.seed(123)
+      CPC(data = scale(df.to.test[,-1]), k = 11, adjust = TRUE, type = "kmeans")
+      
+      #
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+        # 5.3 Plotting Graph
+
+          gg.cpc <- rbind(democ, moral,econ)%>%
             ggplot(aes(x = as.Date(paste0(year, "-01-01")), y = value, color = variable, group = variable)) +
             geom_line(linewidth = 1) +
             geom_point()+
             scale_x_date(date_breaks = "1 years", date_labels = "%Y") +
             scale_y_continuous(limits = c(.50, 1), expand = c(0, 0)) +
-            labs(title = "CPC Data over Time",
+           # scale_color_discrete(labels = c("Pauta Institucional", "Pauta Moral", "Pauta Econômica"))+
+            labs(title = "Evolução da Polarização no Brasil - Temas Sociais e Econômicos",
+                 subtitle = "Cluster-Polarization Coefficient aplicado a escalas de favorabilidade",
                  x = "Year",
-                 y = "CPC") +
+                 y = "CPC",
+                 color = "Coeficiente") +
             theme_minimal()
         
           gg.cpc
           
-          CPC
-          
-          
-          # 5.3 Calculating CPC Coefficient in LAPOP Data for Socioeconomic Questions ----
-          CPC_d1 <- c("2006" = NA,
-                      "2008" = CPC(data = as.numeric(lapop_2008$d1), k = 2, adjust = T, type = "kmeans"),
-                      "2010" = CPC(data = as.numeric(lapop_2010$d1), k = 2, adjust = T, type = "kmeans"),
-                      "2012" = CPC(data = as.numeric(lapop_2012$d1), k = 2, adjust = T, type = "kmeans"),
-                      "2014" = CPC(data = as.numeric(lapop_2014$d1), k = 2, adjust = T, type = "kmeans"),
-                      "2016" = CPC(data = as.numeric(lapop_2016$d1), k = 2, adjust = T, type = "kmeans"),
-                      "2018" = CPC(data = as.numeric(lapop_2018$d1), k = 2, adjust = T, type = "kmeans"))
-          
-          df.cpc_d1 <- data.frame(year = as.numeric(names(CPC_d1)), democ = (CPC_d1))%>%
-            gather(variable, value, -year)
-          
-          
-          rbind(df.cpc_lgbt, df.cpc_socioe, df.cpc_d1)%>%
-            ggplot(aes(x = as.Date(paste0(year, "-01-01")), y = value, color = variable, group = variable)) +
-            geom_line(linewidth = 1) +
-            geom_point()+
-            scale_x_date(date_breaks = "1 years", date_labels = "%Y") +
-            scale_y_continuous(limits = c(.50, 1), expand = c(0, 0)) +
-            labs(title = "CPC Data over Time",
-                 x = "Year",
-                 y = "CPC") +
-            theme_minimal()
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          lapop_2016%>%colnames()%>%sort()
-          
-        
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-            par(mfrow=c(2,4))
-          density(as.numeric(lapop_2006$D1), na.rm=T)%>%plot()
-          density(as.numeric(lapop_2008$d1), na.rm=T)%>%plot()
-          density(as.numeric(lapop_2010$d1), na.rm=T)%>%plot()
-          density(as.numeric(lapop_2012$d1), na.rm=T)%>%plot()
-          density(as.numeric(lapop_2014$d1), na.rm=T)%>%plot()
-          density(as.numeric(lapop_2016$d1), na.rm=T)%>%plot()
-          density(as.numeric(lapop_2018$d1), na.rm=T)%>%plot()
-          
-          par(mfrow=c(2,4))
-          density(as.numeric(lapop_2006$D2), na.rm=T)%>%plot()
-          density(as.numeric(lapop_2008$d2), na.rm=T)%>%plot()
-          density(as.numeric(lapop_2010$d2), na.rm=T)%>%plot()
-          density(as.numeric(lapop_2012$d2), na.rm=T)%>%plot()
-          density(as.numeric(lapop_2014$d2), na.rm=T)%>%plot()
-          density(as.numeric(lapop_2016$d2), na.rm=T)%>%plot()
-          density(as.numeric(lapop_2018$d2), na.rm=T)%>%plot()
-          
-          
-          
-          par(mfrow=c(2,4))
-          density(as.numeric(lapop_2006$D3), na.rm=T)%>%plot()
-          density(as.numeric(lapop_2008$d3), na.rm=T)%>%plot()
-          density(as.numeric(lapop_2010$d3), na.rm=T)%>%plot()
-          density(as.numeric(lapop_2012$d3), na.rm=T)%>%plot()
-          density(as.numeric(lapop_2014$d3), na.rm=T)%>%plot()
-          density(as.numeric(lapop_2016$d3), na.rm=T)%>%plot()
-          density(as.numeric(lapop_2018$d3), na.rm=T)%>%plot()
-          
-          par(mfrow=c(2,4))
-          density(as.numeric(lapop_2006$D4), na.rm=T)%>%plot()
-          density(as.numeric(lapop_2008$d4), na.rm=T)%>%plot()
-          density(as.numeric(lapop_2010$d4), na.rm=T)%>%plot()
-          density(as.numeric(lapop_2012$d4), na.rm=T)%>%plot()
-          density(as.numeric(lapop_2014$d4), na.rm=T)%>%plot()
-          density(as.numeric(lapop_2016$d4), na.rm=T)%>%plot()
-          density(as.numeric(lapop_2018$d4), na.rm=T)%>%plot()
-          
-          par(mfrow=c(2,4))
-          density(as.numeric(lapop_2006$ING4), na.rm=T)%>%plot()
-          density(as.numeric(lapop_2008$ing4), na.rm=T)%>%plot()
-          density(as.numeric(lapop_2010$ing4), na.rm=T)%>%plot()
-          density(as.numeric(lapop_2012$ing4), na.rm=T)%>%plot()
-          density(as.numeric(lapop_2014$ing4), na.rm=T)%>%plot()
-          density(as.numeric(lapop_2016$ing4), na.rm=T)%>%plot()
-          density(as.numeric(lapop_2018$ing4), na.rm=T)%>%plot()
-   
           
   
           
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          L <- list(lapop_2008,lapop_2012,lapop_2014,lapop_2016,lapop_2018)
-          Reduce(intersect, lapply(L, names))
          
